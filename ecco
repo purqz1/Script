@@ -481,41 +481,6 @@ grm.__index = function(self, key)
     return oldIndex(self, key)
 end
 
-local oldRandom
-oldRandom = hookfunction(math.random, function(...)
-    local args = {...}
-    if checkcaller() then
-        return oldRandom(...)
-    end
-    
-    if (#args == 0) or (args[1] == -0.05 and args[2] == 0.05) or (args[1] == -0.1) or (args[1] == -0.05) then
-        if Config['Spread']['Enabled'] then
-            if Config['Spread']['Specific Weapons']['Enabled'] then
-                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                if tool then
-                    local weaponName = tool.Name
-                    local foundWeapon = false
-                    
-                    for _, weapon in pairs(Config['Spread']['Specific Weapons']['Weapons']) do
-                        if weaponName == weapon then
-                            foundWeapon = true
-                            break
-                        end
-                    end
-                    
-                    if foundWeapon then
-                        return oldRandom(...) * (Config['Spread']['Amount'] / 100)
-                    end
-                end
-            else
-                return oldRandom(...) * (Config['Spread']['Amount'] / 100)
-            end
-        end
-    end
-    
-    return oldRandom(...)
-end)
-
 local function addESPToPlayer(player)
     if player == LocalPlayer then return end
     
@@ -890,4 +855,51 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.User
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        rapidFireActive = false
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not Config['Rapid Fire']['Enabled'] or not rapidFireActive then return end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local tool = character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    
+    if Config['Rapid Fire']['Specific Weapons']['Enabled'] then
+        local valid = false
+        for _, wName in pairs(Config['Rapid Fire']['Specific Weapons']['Weapons']) do
+            if tool.Name == wName then
+                valid = true
+                break
+            end
+        end
+        if not valid then return end
+    end
+    
+    tool:Activate()
+    wait(Config['Rapid Fire']['Delay'])
+end)
+
+local infRangeActive = false
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Infinite Range']['Key']] then
+        infRangeActive = not infRangeActive
+        print("Infinite Range: " .. (infRangeActive and "ON" or "OFF"))
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not Config['Infinite Range']['Enabled'] or not infRangeActive then return end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local tool = character:FindFirstChildOfClass("Tool")
+    if not tool then return
