@@ -20,85 +20,6 @@ local superJumpActive = false
 local guiVisible = true
 local wallbangActive = false
 
--- Anti-AimViewer variables
-local aimSmoothing = 0.15
-local lastAimPosition = Vector2.new()
-local aimJitter = 0
-local aimOffset = Vector2.new(0, 0)
-local isAiming = false
-local aimStartTime = 0
-local humanizedDelay = 0
-
--- Damage Enhancer variables
-local damageEnhancerActive = false
-local originalDamageValues = {}
-
--- Humanized aim functions
-local function getHumanizedOffset()
-    -- Creates natural human-like aim offset
-    local time = tick()
-    local jitterX = math.sin(time * 2.3) * 0.3 + math.sin(time * 3.7) * 0.2
-    local jitterY = math.cos(time * 2.7) * 0.3 + math.cos(time * 4.1) * 0.2
-    return Vector2.new(jitterX, jitterY)
-end
-
-local function smoothAim(current, target, smoothness)
-    -- Smooth aim with easing for natural movement
-    local delta = target - current
-    local distance = delta.Magnitude
-    
-    if distance < 1 then
-        return target
-    end
-    
-    -- Dynamic smoothing based on distance (faster for far targets, slower for close)
-    local dynamicSmooth = smoothness * (1 + (distance / 500))
-    local alpha = math.min(1, 1 / dynamicSmooth)
-    
-    -- Add slight overshoot for human-like movement
-    local overshoot = 1.05
-    if distance > 100 then
-        overshoot = 1.08
-    end
-    
-    return current + delta * alpha * overshoot
-end
-
-local function getNaturalAimPosition(targetPos, humanoidPart)
-    -- Simulates natural human aim with slight delays and micro-adjustments
-    local currentPos = Vector2.new(Mouse.X, Mouse.Y)
-    local targetScreenPos, onScreen = Camera:WorldToViewportPoint(targetPos)
-    
-    if not onScreen then
-        return currentPos
-    end
-    
-    local targetVec = Vector2.new(targetScreenPos.X, targetScreenPos.Y)
-    
-    -- Add human-like micro-jitter
-    local jitter = getHumanizedOffset()
-    
-    -- Add slight aim offset based on target distance
-    local distance = (targetPos - Camera.CFrame.Position).Magnitude
-    local distanceOffset = math.clamp(distance / 1000, 0, 5)
-    
-    -- Random micro-adjustments (human eyes don't stay perfectly still)
-    if math.random() < 0.02 then
-        aimOffset = Vector2.new(
-            (math.random() - 0.5) * 2,
-            (math.random() - 0.5) * 2
-        )
-    end
-    
-    local finalTarget = targetVec + jitter * 0.5 + aimOffset * distanceOffset * 0.1
-    
-    -- Smooth transition to target
-    local smoothValue = Config['Anti AimViewer']['Smoothness'] or 15
-    local smoothed = smoothAim(currentPos, finalTarget, smoothValue)
-    
-    return smoothed
-end
-
 local function elasticOut(t)
     local p = 0.3
     return math.pow(2, -10 * t) * math.sin((t - p / 4) * (2 * math.pi) / p) + 1
@@ -139,77 +60,8 @@ local function isSelfKnocked()
     return false
 end
 
-local function getDamageMultiplier()
-    if not Config['Damage Enhancer']['Enabled'] then return 1 end
-    
-    local mode = Config['Damage Enhancer']['Mode']
-    if mode == 'Light' then
-        return 1.5
-    elseif mode == 'Medium' then
-        return 2.0
-    elseif mode == 'Full' then
-        return 3.0
-    end
-    return 1
-end
-
-local function shouldApplyDamageEnhancer(tool)
-    if not tool then return false end
-    if not Config['Damage Enhancer']['Enabled'] then return false end
-    
-    local weaponConfig = Config['Damage Enhancer']['Specific Weapons']
-    if not weaponConfig['Enabled'] then return true end
-    
-    for _, weaponName in pairs(weaponConfig['Weapons']) do
-        if tool.Name == weaponName or tool.Name:find(weaponName:gsub("[%[%]]", "")) then
-            return true
-        end
-    end
-    return false
-end
-
-local function applyDamageEnhancer()
-    if not Config['Damage Enhancer']['Enabled'] then return end
-    
-    local character = LocalPlayer.Character
-    if not character then return end
-    
-    local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then return end
-    
-    if not shouldApplyDamageEnhancer(tool) then return end
-    
-    local multiplier = getDamageMultiplier()
-    
-    local damageProps = {"Damage", "BaseDamage", "MaxDamage", "MinDamage", "BulletDamage", "DamageAmount", "HitDamage"}
-    
-    for _, propName in pairs(damageProps) do
-        local prop = tool:FindFirstChild(propName)
-        if prop and prop:IsA("NumberValue") then
-            local key = tostring(tool) .. "_" .. propName
-            if not originalDamageValues[key] then
-                originalDamageValues[key] = prop.Value
-            end
-            prop.Value = originalDamageValues[key] * multiplier
-        end
-    end
-    
-    local configFolder = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig") or tool:FindFirstChild("Stats")
-    if configFolder then
-        for _, propName in pairs(damageProps) do
-            local prop = configFolder:FindFirstChild(propName)
-            if prop and prop:IsA("NumberValue") then
-                local key = tostring(configFolder) .. "_" .. propName
-                if not originalDamageValues[key] then
-                    originalDamageValues[key] = prop.Value
-                end
-                prop.Value = originalDamageValues[key] * multiplier
-            end
-        end
-    end
-end
-
 local function canSeeTarget(part)
+    -- Wallbang bypass
     if wallbangActive and Config['Wallbang']['Enabled'] then
         return true
     end
@@ -531,89 +383,77 @@ local function TriggerBot()
     lastTriggerClick = tick()
 end
 
--- Override mouse movement for anti-aimviewer
-local function setupAntiAimViewer()
-    if not Config['Anti AimViewer']['Enabled'] then return end
+local function applyDamageEnhancer()
+    if not Config['Damage Enhancer']['Enabled'] then return end
     
-    local mouseMoveConnection
-    local isMouseMoving = false
-    local lastMousePos = Vector2.new(Mouse.X, Mouse.Y)
-    local mouseVelocity = Vector2.new(0, 0)
+    local character = LocalPlayer.Character
+    if not character then return end
     
-    -- Track mouse movement velocity
-    mouseMoveConnection = UserInputService.InputChanged:Connect(function(input, processed)
-        if processed then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            local currentPos = Vector2.new(input.Position.X, input.Position.Y)
-            mouseVelocity = (currentPos - lastMousePos) * 0.5
-            lastMousePos = currentPos
-            isMouseMoving = true
-        end
-    end)
+    local tool = character:FindFirstChildOfClass("Tool")
+    if not tool then return end
     
-    -- Hook the Mouse.Hit property to return natural aim positions
-    local oldHitIndex = grm.__index
-    grm.__index = function(self, key)
-        if not checkcaller() and self == Mouse and Config['Anti AimViewer']['Enabled'] then
-            if key == "Hit" then
-                if Config['Silent Aim']['Enabled'] and currentTarget then
-                    local character = currentTarget.Parent
-                    if character then
-                        local targetPart = currentTarget
-                        if targetPart then
-                            local predictedPos = getPredictedPosition(targetPart, Config['Silent Aim'])
-                            local naturalPos = getNaturalAimPosition(predictedPos, character:FindFirstChild("HumanoidRootPart"))
-                            
-                            -- Only adjust if mouse is relatively close to target (prevents snapping)
-                            local mousePos = Vector2.new(Mouse.X, Mouse.Y)
-                            local targetScreen, onScreen = Camera:WorldToViewportPoint(predictedPos)
-                            if onScreen then
-                                local targetVec = Vector2.new(targetScreen.X, targetScreen.Y)
-                                local distToTarget = (mousePos - targetVec).Magnitude
-                                
-                                -- If target is within reasonable distance, apply natural aim
-                                if distToTarget < 500 then
-                                    -- Add human reaction delay
-                                    local currentTime = tick()
-                                    if currentTime - aimStartTime > (humanizedDelay or 0.05) then
-                                        aimStartTime = currentTime
-                                        humanizedDelay = 0.05 + math.random() * 0.15
-                                        
-                                        -- Gradually move mouse toward target
-                                        local smoothFactor = Config['Anti AimViewer']['Smoothness'] or 15
-                                        local newPos = smoothAim(mousePos, targetVec, smoothFactor)
-                                        
-                                        -- Apply mouse movement with velocity-based smoothing
-                                        local velocityFactor = math.clamp(mouseVelocity.Magnitude / 100, 0, 0.5)
-                                        local finalPos = newPos:Lerp(targetVec, 1 - velocityFactor)
-                                        
-                                        -- Move mouse naturally
-                                        mousemoverel(finalPos.X - mousePos.X, finalPos.Y - mousePos.Y)
-                                    end
-                                end
-                            end
-                            
-                            -- Return the predicted position for hit detection
-                            return CFrame.new(predictedPos)
-                        end
-                    end
-                end
+    -- Check specific weapons
+    local weaponConfig = Config['Damage Enhancer']['Specific Weapons']
+    if weaponConfig['Enabled'] then
+        local valid = false
+        for _, wName in pairs(weaponConfig['Weapons']) do
+            if tool.Name == wName then
+                valid = true
+                break
             end
         end
-        return oldHitIndex(self, key)
+        if not valid then return end
+    end
+    
+    -- Get multiplier based on mode
+    local multiplier = 1
+    local mode = Config['Damage Enhancer']['Mode']
+    if mode == 'Light' then
+        multiplier = 1.5
+    elseif mode == 'Medium' then
+        multiplier = 2.0
+    elseif mode == 'Full' then
+        multiplier = 3.0
+    end
+    
+    -- Apply to damage properties
+    local damageProps = {"Damage", "BaseDamage", "MaxDamage", "MinDamage", "BulletDamage", "DamageAmount", "HitDamage"}
+    for _, propName in pairs(damageProps) do
+        local prop = tool:FindFirstChild(propName)
+        if prop and prop:IsA("NumberValue") then
+            if not tool:FindFirstChild("_Original" .. propName) then
+                local orig = Instance.new("NumberValue")
+                orig.Name = "_Original" .. propName
+                orig.Value = prop.Value
+                orig.Parent = tool
+            end
+            prop.Value = prop.Value * multiplier
+        end
+    end
+    
+    -- Check config folder
+    local configFolder = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig") or tool:FindFirstChild("Stats")
+    if configFolder then
+        for _, propName in pairs(damageProps) do
+            local prop = configFolder:FindFirstChild(propName)
+            if prop and prop:IsA("NumberValue") then
+                if not configFolder:FindFirstChild("_Original" .. propName) then
+                    local orig = Instance.new("NumberValue")
+                    orig.Name = "_Original" .. propName
+                    orig.Value = prop.Value
+                    orig.Parent = configFolder
+                end
+                prop.Value = prop.Value * multiplier
+            end
+        end
     end
 end
 
--- Hook the Mouse.Hit for anti-aimviewer in Silent Aim
 local grm = getrawmetatable(game)
 local oldIndex = grm.__index
 setreadonly(grm, false)
-
--- Store original index for later use
-local originalMouseHit = grm.__index
-
 grm.__index = function(self, key)
-    if not checkcaller() and self == Mouse and Config['Silent Aim']['Enabled'] and Config['Anti AimViewer']['Enabled'] then
+    if not checkcaller() and self == Mouse and Config['Silent Aim']['Enabled'] then
         if key == "Hit" then
             if not currentTarget then return oldIndex(self, key) end
             
@@ -634,29 +474,17 @@ grm.__index = function(self, key)
             if targetPart then
                 local predictedPos = getPredictedPosition(targetPart, Config['Silent Aim'])
                 
-                -- Add natural aim offset for anti-aimviewer
-                local naturalOffset = Vector3.new(
-                    (math.sin(tick() * 2.1) * 0.5 + math.sin(tick() * 3.3) * 0.3) / 100,
-                    (math.cos(tick() * 2.5) * 0.5 + math.cos(tick() * 3.7) * 0.3) / 100,
-                    0
-                )
-                
-                -- Only apply offset if player is moving or aiming naturally
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid and humanoid.MoveDirection.Magnitude > 0.5 then
-                    naturalOffset = naturalOffset * 1.5 -- More wobble when moving
-                end
-                
-                -- Random micro-adjustments
-                if math.random() < 0.03 then
-                    naturalOffset = naturalOffset + Vector3.new(
-                        (math.random() - 0.5) * 0.02,
-                        (math.random() - 0.5) * 0.02,
+                -- Anti-AimViewer: add natural offset to avoid detection
+                if Config['Anti AimViewer']['Enabled'] then
+                    local offset = Vector3.new(
+                        (math.sin(tick() * 2.1) * 0.5 + math.sin(tick() * 3.3) * 0.3) / 100,
+                        (math.cos(tick() * 2.5) * 0.5 + math.cos(tick() * 3.7) * 0.3) / 100,
                         0
                     )
+                    return CFrame.new(predictedPos + offset)
                 end
                 
-                return CFrame.new(predictedPos + naturalOffset)
+                return CFrame.new(predictedPos)
             end
         end
     end
@@ -846,6 +674,7 @@ RunService.RenderStepped:Connect(function()
     
     TriggerBot()
     
+    -- Apply Damage Enhancer
     if Config['Damage Enhancer']['Enabled'] then
         applyDamageEnhancer()
     end
@@ -973,3 +802,81 @@ UserInputService.InputBegan:Connect(function(input, processed)
                         lastVisibleTarget = target
                         isLocking = true
                     end
+                end
+            else
+                isLocking = not isLocking
+            end
+        elseif mode == 'Hold' then
+            if Config['Settings']['Target Aim'] then
+                local target = findClosestTarget()
+                if target then
+                    currentTarget = target
+                    lastVisibleTarget = target
+                    isLocking = true
+                end
+            else
+                isLocking = true
+            end
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Trigger Bot']['Key']] then
+        local mode = Config['Keybinds']['Trigger Bot']['Mode']
+        
+        if mode == 'Toggle' then
+            triggerEnabled = not triggerEnabled
+        elseif mode == 'Hold' then
+            triggerEnabled = true
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Speed']] then
+        local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            if not SpeedEnabled then
+                BaseSpeed = 16
+                SpeedEnabled = true
+            else
+                humanoid.WalkSpeed = BaseSpeed
+                SpeedEnabled = false
+            end
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['ESP']] then
+        Config['Visual Awareness']['Enabled'] = not Config['Visual Awareness']['Enabled']
+        print("ESP: " .. (Config['Visual Awareness']['Enabled'] and "ON" or "OFF"))
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Super Jump']] then
+        superJumpActive = not superJumpActive
+        print("Super Jump: " .. (superJumpActive and "ON" or "OFF"))
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Toggle on-screen Text']] then
+        guiVisible = not guiVisible
+        print("GUI Text: " .. (guiVisible and "ON" or "OFF"))
+    end
+    
+    -- Wallbang toggle
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Wallbang']] then
+        wallbangActive = not wallbangActive
+        print("Wallbang: " .. (wallbangActive and "ON" or "OFF"))
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, processed)
+    if processed then return end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Target Lock']['Key']] then
+        local mode = Config['Keybinds']['Target Lock']['Mode']
+        
+        if mode == 'Hold' then
+            isLocking = false
+            currentTarget = nil
+            lastVisibleTarget = nil
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Trigger Bot']['Key']] then
+        local mode = Config['Keybinds
