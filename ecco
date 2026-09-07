@@ -18,7 +18,7 @@ local lastVisibleTarget = nil
 local lastTriggerClick = 0
 local superJumpActive = false
 local guiVisible = true
-local wallbangActive = false  -- ADDED
+local wallbangActive = false
 
 local function elasticOut(t)
     local p = 0.3
@@ -60,7 +60,6 @@ local function isSelfKnocked()
     return false
 end
 
--- MODIFIED: Added Wallbang bypass
 local function canSeeTarget(part)
     if wallbangActive and Config['Wallbang']['Enabled'] then
         return true
@@ -383,7 +382,6 @@ local function TriggerBot()
     lastTriggerClick = tick()
 end
 
--- ADDED: Damage Enhancer function
 local function applyDamageEnhancer()
     if not Config['Damage Enhancer']['Enabled'] then return end
     
@@ -393,7 +391,6 @@ local function applyDamageEnhancer()
     local tool = character:FindFirstChildOfClass("Tool")
     if not tool then return end
     
-    -- Check specific weapons
     local weaponConfig = Config['Damage Enhancer']['Specific Weapons']
     if weaponConfig['Enabled'] then
         local valid = false
@@ -406,7 +403,6 @@ local function applyDamageEnhancer()
         if not valid then return end
     end
     
-    -- Get multiplier based on mode
     local multiplier = 1
     local mode = Config['Damage Enhancer']['Mode']
     if mode == 'Light' then
@@ -417,7 +413,6 @@ local function applyDamageEnhancer()
         multiplier = 3.0
     end
     
-    -- Apply to damage properties
     local damageProps = {"Damage", "BaseDamage", "MaxDamage", "MinDamage", "BulletDamage", "DamageAmount", "HitDamage"}
     for _, propName in pairs(damageProps) do
         local prop = tool:FindFirstChild(propName)
@@ -435,7 +430,6 @@ local function applyDamageEnhancer()
         end
     end
     
-    -- Check config folder
     local configFolder = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig") or tool:FindFirstChild("Stats")
     if configFolder then
         for _, propName in pairs(damageProps) do
@@ -610,7 +604,7 @@ for _, player in pairs(Players:GetPlayers()) do
     player.CharacterAdded:Connect(function(char)
         removeESPFromPlayer(player)
         char:WaitForChild("HumanoidRootPart")
-        task.wait(0.1)
+        wait(0.1)
         addESPToPlayer(player)
     end)
     
@@ -624,7 +618,7 @@ Players.PlayerAdded:Connect(function(player)
         player.CharacterAdded:Connect(function(char)
             removeESPFromPlayer(player)
             char:WaitForChild("HumanoidRootPart")
-            task.wait(0.1)
+            wait(0.1)
             addESPToPlayer(player)
         end)
         
@@ -657,7 +651,7 @@ RunService.Heartbeat:Connect(function()
             Config['Super Jump']['Power'],
             rootPart.Velocity.Z
         )
-        task.wait(Config['Super Jump']['Cooldown'])
+        wait(Config['Super Jump']['Cooldown'])
     end
 end)
 
@@ -670,7 +664,6 @@ RunService.RenderStepped:Connect(function()
     
     TriggerBot()
     
-    -- ADDED: Apply Damage Enhancer
     if Config['Damage Enhancer']['Enabled'] then
         applyDamageEnhancer()
     end
@@ -854,7 +847,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
         print("GUI Text: " .. (guiVisible and "ON" or "OFF"))
     end
     
-    -- ADDED: Wallbang toggle
     if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Wallbang']] then
         wallbangActive = not wallbangActive
         print("Wallbang: " .. (wallbangActive and "ON" or "OFF"))
@@ -884,6 +876,18 @@ UserInputService.InputEnded:Connect(function(input, processed)
 end)
 
 LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1)
+    wait(1)
 end)
-local rapidFireActive =
+
+local rapidFireActive = false
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        rapidFireActive = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.User
