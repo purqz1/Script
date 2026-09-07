@@ -1,0 +1,331 @@
+-- Main Script with UI and Key System
+local key = "purqz"
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
+
+-- Background
+local background = Instance.new("Frame")
+background.Size = UDim2.new(0, 600, 0, 400)
+background.Position = UDim2.new(0.5, -300, 0.5, -200)
+background.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+background.BackgroundTransparency = 0.15
+background.BorderSizePixel = 0
+background.ClipsDescendants = true
+background.Parent = screenGui
+
+-- Gradient
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 60)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 20, 80)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 10, 40))
+})
+gradient.Parent = background
+
+-- Glow Effect
+local glow = Instance.new("Frame")
+glow.Size = UDim2.new(1.1, 0, 1.1, 0)
+glow.Position = UDim2.new(-0.05, 0, -0.05, 0)
+glow.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+glow.BackgroundTransparency = 0.8
+glow.BorderSizePixel = 0
+glow.Parent = background
+
+local glowBlur = Instance.new("BlurEffect")
+glowBlur.Size = 30
+glowBlur.Parent = glow
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 60)
+title.Position = UDim2.new(0, 0, 0, 10)
+title.BackgroundTransparency = 1
+title.Text = "⧩ QUANTUM ⧩"
+title.TextColor3 = Color3.fromRGB(255, 200, 255)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = background
+
+-- Subtitle
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, 0, 0, 30)
+subtitle.Position = UDim2.new(0, 0, 0, 70)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "⚡ ENTER VALIDATION KEY ⚡"
+subtitle.TextColor3 = Color3.fromRGB(150, 100, 200)
+subtitle.TextScaled = true
+subtitle.Font = Enum.Font.Gotham
+subtitle.Parent = background
+
+-- Key Input
+local keyBox = Instance.new("TextBox")
+keyBox.Size = UDim2.new(0.6, 0, 0, 50)
+keyBox.Position = UDim2.new(0.2, 0, 0, 130)
+keyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+keyBox.BorderColor3 = Color3.fromRGB(100, 50, 200)
+keyBox.BorderSizePixel = 2
+keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyBox.Text = ""
+keyBox.PlaceholderText = "Enter Key..."
+keyBox.Font = Enum.Font.Gotham
+keyBox.TextScaled = true
+keyBox.ClearTextOnFocus = false
+keyBox.Parent = background
+
+-- Key Button
+local keyButton = Instance.new("TextButton")
+keyButton.Size = UDim2.new(0.4, 0, 0, 50)
+keyButton.Position = UDim2.new(0.3, 0, 0, 200)
+keyButton.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+keyButton.BackgroundTransparency = 0.1
+keyButton.BorderColor3 = Color3.fromRGB(200, 100, 255)
+keyButton.BorderSizePixel = 2
+keyButton.Text = "⚡ UNLOCK ⚡"
+keyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyButton.Font = Enum.Font.GothamBold
+keyButton.TextScaled = true
+keyButton.Parent = background
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, 0, 0, 30)
+statusLabel.Position = UDim2.new(0, 0, 0, 270)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = ""
+statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Parent = background
+
+-- UI Elements (Hidden until key is entered)
+local mainUI = Instance.new("Frame")
+mainUI.Size = UDim2.new(1, 0, 1, 0)
+mainUI.BackgroundTransparency = 1
+mainUI.Visible = false
+mainUI.Parent = background
+
+-- Main UI Elements
+local function createMainUI()
+    -- Feature Buttons
+    local features = {
+        {name = "Hitbox Size", pos = UDim2.new(0.05, 0, 0.1, 0)},
+        {name = "ESP", pos = UDim2.new(0.55, 0, 0.1, 0)},
+        {name = "Team Check", pos = UDim2.new(0.05, 0, 0.45, 0)},
+        {name = "Server Region", pos = UDim2.new(0.55, 0, 0.45, 0)}
+    }
+    
+    for _, feature in pairs(features) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.35, 0, 0.25, 0)
+        btn.Position = feature.pos
+        btn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+        btn.BorderColor3 = Color3.fromRGB(100, 50, 200)
+        btn.BorderSizePixel = 2
+        btn.Text = feature.name
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextScaled = true
+        btn.Parent = mainUI
+        
+        local gradient2 = Instance.new("UIGradient")
+        gradient2.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 20, 100)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 50, 100))
+        })
+        gradient2.Parent = btn
+    end
+    
+    -- Hitbox Size Slider
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0.35, 0, 0.25, 0)
+    sliderFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Visible = false
+    sliderFrame.Parent = mainUI
+    
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0.8, 0, 0.1, 0)
+    slider.Position = UDim2.new(0.1, 0, 0.8, 0)
+    slider.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
+    slider.Parent = sliderFrame
+    
+    local sliderButton = Instance.new("TextButton")
+    sliderButton.Size = UDim2.new(0.1, 0, 2, 0)
+    sliderButton.Position = UDim2.new(0.5, -15, -0.5, 0)
+    sliderButton.BackgroundColor3 = Color3.fromRGB(200, 100, 255)
+    sliderButton.BorderSizePixel = 0
+    sliderButton.Text = ""
+    sliderButton.Parent = slider
+end
+
+createMainUI()
+
+-- Key Button Function
+keyButton.MouseButton1Click:Connect(function()
+    if keyBox.Text == key then
+        statusLabel.Text = "✅ ACCESS GRANTED"
+        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        wait(0.5)
+        background.Visible = false
+        mainUI.Visible = true
+    else
+        statusLabel.Text = "❌ INVALID KEY"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        keyBox.Text = ""
+    end
+end)
+
+-- Enter key support
+keyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        keyButton.MouseButton1Click:Fire()
+    end
+end)
+
+-- Original Script (Modified to be toggled)
+local enabled = false
+
+-- Your original function
+local function getplrsname()
+    for i,v in pairs(game:GetChildren()) do
+        if v.ClassName == "Players" then
+            return v.Name
+        end
+    end
+end
+
+local function startScript()
+    local players = getplrsname()
+    local plr = game[players].LocalPlayer
+    
+    coroutine.resume(coroutine.create(function()
+        while wait(1) do
+            if not enabled then break end
+            coroutine.resume(coroutine.create(function()
+                for _,v in pairs(game[players]:GetPlayers()) do
+                    if v.Name ~= plr.Name and v.Character then
+                        pcall(function()
+                            v.Character.RightUpperLeg.CanCollide = false
+                            v.Character.RightUpperLeg.Transparency = 0.3
+                            v.Character.RightUpperLeg.Size = Vector3.new(13,13,13)
+                            
+                            v.Character.LeftUpperLeg.CanCollide = false
+                            v.Character.LeftUpperLeg.Transparency = 0.3
+                            v.Character.LeftUpperLeg.Size = Vector3.new(13,13,13)
+                            
+                            v.Character.HeadHB.CanCollide = false
+                            v.Character.HeadHB.Transparency = 0.3
+                            v.Character.HeadHB.Size = Vector3.new(13,13,13)
+                            
+                            v.Character.HumanoidRootPart.CanCollide = false
+                            v.Character.HumanoidRootPart.Transparency = 0.3
+                            v.Character.HumanoidRootPart.Size = Vector3.new(13,13,13)
+                        end)
+                    end
+                end
+            end))
+        end
+    end))
+end
+
+-- Toggle script with UI button (example)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
+toggleBtn.Position = UDim2.new(0.35, 0, 0.85, 0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+toggleBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
+toggleBtn.BorderSizePixel = 2
+toggleBtn.Text = "⏸ TOGGLE SCRIPT"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextScaled = true
+toggleBtn.Parent = mainUI
+
+toggleBtn.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    if enabled then
+        toggleBtn.Text = "▶ SCRIPT ACTIVE"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        startScript()
+    else
+        toggleBtn.Text = "⏸ TOGGLE SCRIPT"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+    end
+end)
+
+-- Server Region Check
+local regionBtn = Instance.new("TextButton")
+regionBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
+regionBtn.Position = UDim2.new(0.35, 0, 0.75, 0)
+regionBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+regionBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
+regionBtn.BorderSizePixel = 2
+regionBtn.Text = "🌍 CHECK REGION"
+regionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+regionBtn.Font = Enum.Font.GothamBold
+regionBtn.TextScaled = true
+regionBtn.Parent = mainUI
+
+regionBtn.MouseButton1Click:Connect(function()
+    local region = game:GetService("NetworkServer"):GetServerRegion()
+    regionBtn.Text = "🌍 " .. region:upper()
+    wait(2)
+    regionBtn.Text = "🌍 CHECK REGION"
+end)
+
+-- ESP Toggle
+local espEnabled = false
+local espBtn = Instance.new("TextButton")
+espBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
+espBtn.Position = UDim2.new(0.35, 0, 0.65, 0)
+espBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+espBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
+espBtn.BorderSizePixel = 2
+espBtn.Text = "👁 ESP OFF"
+espBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+espBtn.Font = Enum.Font.GothamBold
+espBtn.TextScaled = true
+espBtn.Parent = mainUI
+
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = espEnabled and "👁 ESP ON" or "👁 ESP OFF"
+    
+    -- Simple ESP implementation
+    for _,v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character then
+            if v.Character:FindFirstChild("Head") then
+                local highlight = Instance.new("Highlight")
+                highlight.Parent = v.Character
+                highlight.Enabled = espEnabled
+                highlight.FillColor = espEnabled and Color3.fromRGB(255, 0, 0) or Color3.new()
+                highlight.OutlineColor = espEnabled and Color3.fromRGB(255, 255, 255) or Color3.new()
+            end
+        end
+    end
+end)
+
+-- Team Check
+local teamCheckBtn = Instance.new("TextButton")
+teamCheckBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
+teamCheckBtn.Position = UDim2.new(0.35, 0, 0.55, 0)
+teamCheckBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+teamCheckBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
+teamCheckBtn.BorderSizePixel = 2
+teamCheckBtn.Text = "👥 TEAM CHECK"
+teamCheckBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+teamCheckBtn.Font = Enum.Font.GothamBold
+teamCheckBtn.TextScaled = true
+teamCheckBtn.Parent = mainUI
+
+teamCheckBtn.MouseButton1Click:Connect(function()
+    local plr = game.Players.LocalPlayer
+    local team = plr.Team
+    local msg = team and "Team: " .. team.Name or "No Team"
+    teamCheckBtn.Text = msg
+    wait(2)
+    teamCheckBtn.Text = "👥 TEAM CHECK"
+end)
