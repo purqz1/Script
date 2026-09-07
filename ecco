@@ -392,7 +392,6 @@ local function applyDamageEnhancer()
     local tool = character:FindFirstChildOfClass("Tool")
     if not tool then return end
     
-    -- Check specific weapons
     local weaponConfig = Config['Damage Enhancer']['Specific Weapons']
     if weaponConfig['Enabled'] then
         local valid = false
@@ -405,7 +404,6 @@ local function applyDamageEnhancer()
         if not valid then return end
     end
     
-    -- Get multiplier based on mode
     local multiplier = 1
     local mode = Config['Damage Enhancer']['Mode']
     if mode == 'Light' then
@@ -416,7 +414,6 @@ local function applyDamageEnhancer()
         multiplier = 3.0
     end
     
-    -- Apply to damage properties
     local damageProps = {"Damage", "BaseDamage", "MaxDamage", "MinDamage", "BulletDamage", "DamageAmount", "HitDamage"}
     for _, propName in pairs(damageProps) do
         local prop = tool:FindFirstChild(propName)
@@ -431,7 +428,6 @@ local function applyDamageEnhancer()
         end
     end
     
-    -- Check config folder
     local configFolder = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig") or tool:FindFirstChild("Stats")
     if configFolder then
         for _, propName in pairs(damageProps) do
@@ -474,7 +470,7 @@ grm.__index = function(self, key)
             if targetPart then
                 local predictedPos = getPredictedPosition(targetPart, Config['Silent Aim'])
                 
-                -- Anti-AimViewer: add natural offset to avoid detection
+                -- Anti-AimViewer: add natural offset
                 if Config['Anti AimViewer']['Enabled'] then
                     local offset = Vector3.new(
                         (math.sin(tick() * 2.1) * 0.5 + math.sin(tick() * 3.3) * 0.3) / 100,
@@ -878,5 +874,4 @@ UserInputService.InputEnded:Connect(function(input, processed)
         end
     end
     
-    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Trigger Bot']['Key']] then
-        local mode = Config['Keybinds
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Trigger Bot']['
