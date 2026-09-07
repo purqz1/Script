@@ -1,331 +1,748 @@
--- Main Script with UI and Key System
-local key = "purqz"
+-- PROFESSIONAL QUANTUM SYSTEM v5.0
+-- Premium Execution Environment with Tab System
 
--- Create ScreenGui
+-- Services
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local userInput = game:GetService("UserInputService")
+local tweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
+local lighting = game:GetService("Lighting")
+local coreGui = game:GetService("CoreGui")
+
+-- Configuration
+local CONFIG = {
+    Key = "purqz",
+    Theme = {
+        Primary = Color3.fromRGB(80, 30, 180),
+        Secondary = Color3.fromRGB(40, 15, 100),
+        Background = Color3.fromRGB(8, 8, 16),
+        Surface = Color3.fromRGB(15, 15, 30),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextDim = Color3.fromRGB(150, 150, 180),
+        Accent = Color3.fromRGB(60, 20, 140),
+        Success = Color3.fromRGB(0, 200, 100),
+        Error = Color3.fromRGB(255, 50, 50),
+        Warning = Color3.fromRGB(255, 200, 0),
+        Card = Color3.fromRGB(20, 20, 40)
+    }
+}
+
+-- Create Main ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Name = "QuantumSystem"
+screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Background
-local background = Instance.new("Frame")
-background.Size = UDim2.new(0, 600, 0, 400)
-background.Position = UDim2.new(0.5, -300, 0.5, -200)
-background.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-background.BackgroundTransparency = 0.15
-background.BorderSizePixel = 0
-background.ClipsDescendants = true
-background.Parent = screenGui
+-- ============================================
+-- LOADING SCREEN
+-- ============================================
+local loadingScreen = Instance.new("Frame")
+loadingScreen.Size = UDim2.new(1, 0, 1, 0)
+loadingScreen.BackgroundColor3 = CONFIG.Theme.Background
+loadingScreen.BorderSizePixel = 0
+loadingScreen.Parent = screenGui
 
--- Gradient
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 10, 60)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 20, 80)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 10, 40))
+local loadingGradient = Instance.new("UIGradient")
+loadingGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 5, 15)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 5, 30)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 15))
 })
-gradient.Parent = background
+loadingGradient.Parent = loadingScreen
 
--- Glow Effect
-local glow = Instance.new("Frame")
-glow.Size = UDim2.new(1.1, 0, 1.1, 0)
-glow.Position = UDim2.new(-0.05, 0, -0.05, 0)
-glow.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
-glow.BackgroundTransparency = 0.8
-glow.BorderSizePixel = 0
-glow.Parent = background
+local logoContainer = Instance.new("Frame")
+logoContainer.Size = UDim2.new(0, 200, 0, 200)
+logoContainer.Position = UDim2.new(0.5, -100, 0.4, -100)
+logoContainer.BackgroundTransparency = 1
+logoContainer.Parent = loadingScreen
 
-local glowBlur = Instance.new("BlurEffect")
-glowBlur.Size = 30
-glowBlur.Parent = glow
+local logoRing = Instance.new("Frame")
+logoRing.Size = UDim2.new(1, 0, 1, 0)
+logoRing.Position = UDim2.new(0, 0, 0, 0)
+logoRing.BackgroundColor3 = CONFIG.Theme.Primary
+logoRing.BackgroundTransparency = 0.8
+logoRing.BorderSizePixel = 0
+logoRing.Parent = logoContainer
 
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 60)
-title.Position = UDim2.new(0, 0, 0, 10)
-title.BackgroundTransparency = 1
-title.Text = "⧩ QUANTUM ⧩"
-title.TextColor3 = Color3.fromRGB(255, 200, 255)
-title.TextScaled = true
-title.Font = Enum.Font.GothamBold
-title.Parent = background
+local ringCorner = Instance.new("UICorner")
+ringCorner.CornerRadius = UDim.new(1, 0)
+ringCorner.Parent = logoRing
 
--- Subtitle
-local subtitle = Instance.new("TextLabel")
-subtitle.Size = UDim2.new(1, 0, 0, 30)
-subtitle.Position = UDim2.new(0, 0, 0, 70)
-subtitle.BackgroundTransparency = 1
-subtitle.Text = "⚡ ENTER VALIDATION KEY ⚡"
-subtitle.TextColor3 = Color3.fromRGB(150, 100, 200)
-subtitle.TextScaled = true
-subtitle.Font = Enum.Font.Gotham
-subtitle.Parent = background
+local logoText = Instance.new("TextLabel")
+logoText.Size = UDim2.new(1, 0, 1, 0)
+logoText.Position = UDim2.new(0, 0, 0, 0)
+logoText.BackgroundTransparency = 1
+logoText.Text = "QS"
+logoText.TextColor3 = CONFIG.Theme.Text
+logoText.TextScaled = true
+logoText.Font = Enum.Font.GothamBold
+logoText.Parent = logoContainer
 
--- Key Input
-local keyBox = Instance.new("TextBox")
-keyBox.Size = UDim2.new(0.6, 0, 0, 50)
-keyBox.Position = UDim2.new(0.2, 0, 0, 130)
-keyBox.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-keyBox.BorderColor3 = Color3.fromRGB(100, 50, 200)
-keyBox.BorderSizePixel = 2
-keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyBox.Text = ""
-keyBox.PlaceholderText = "Enter Key..."
-keyBox.Font = Enum.Font.Gotham
-keyBox.TextScaled = true
-keyBox.ClearTextOnFocus = false
-keyBox.Parent = background
+local loadingTitle = Instance.new("TextLabel")
+loadingTitle.Size = UDim2.new(0, 400, 0, 50)
+loadingTitle.Position = UDim2.new(0.5, -200, 0.6, 0)
+loadingTitle.BackgroundTransparency = 1
+loadingTitle.Text = "INITIALIZING SYSTEM"
+loadingTitle.TextColor3 = CONFIG.Theme.Text
+loadingTitle.TextScaled = true
+loadingTitle.Font = Enum.Font.GothamBold
+loadingTitle.Parent = loadingScreen
 
--- Key Button
-local keyButton = Instance.new("TextButton")
-keyButton.Size = UDim2.new(0.4, 0, 0, 50)
-keyButton.Position = UDim2.new(0.3, 0, 0, 200)
-keyButton.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
-keyButton.BackgroundTransparency = 0.1
-keyButton.BorderColor3 = Color3.fromRGB(200, 100, 255)
-keyButton.BorderSizePixel = 2
-keyButton.Text = "⚡ UNLOCK ⚡"
-keyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyButton.Font = Enum.Font.GothamBold
-keyButton.TextScaled = true
-keyButton.Parent = background
+local loadingSubtitle = Instance.new("TextLabel")
+loadingSubtitle.Size = UDim2.new(0, 400, 0, 30)
+loadingSubtitle.Position = UDim2.new(0.5, -200, 0.65, 0)
+loadingSubtitle.BackgroundTransparency = 1
+loadingSubtitle.Text = "Loading Quantum Environment..."
+loadingSubtitle.TextColor3 = CONFIG.Theme.TextDim
+loadingSubtitle.TextScaled = true
+loadingSubtitle.Font = Enum.Font.Gotham
+loadingSubtitle.Parent = loadingScreen
 
--- Status Label
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 30)
-statusLabel.Position = UDim2.new(0, 0, 0, 270)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = ""
-statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-statusLabel.TextScaled = true
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = background
+local progressBg = Instance.new("Frame")
+progressBg.Size = UDim2.new(0, 400, 0, 4)
+progressBg.Position = UDim2.new(0.5, -200, 0.7, 0)
+progressBg.BackgroundColor3 = CONFIG.Theme.Surface
+progressBg.BorderSizePixel = 0
+progressBg.Parent = loadingScreen
 
--- UI Elements (Hidden until key is entered)
-local mainUI = Instance.new("Frame")
-mainUI.Size = UDim2.new(1, 0, 1, 0)
-mainUI.BackgroundTransparency = 1
-mainUI.Visible = false
-mainUI.Parent = background
+local progressCorner = Instance.new("UICorner")
+progressCorner.CornerRadius = UDim.new(1, 0)
+progressCorner.Parent = progressBg
 
--- Main UI Elements
-local function createMainUI()
-    -- Feature Buttons
-    local features = {
-        {name = "Hitbox Size", pos = UDim2.new(0.05, 0, 0.1, 0)},
-        {name = "ESP", pos = UDim2.new(0.55, 0, 0.1, 0)},
-        {name = "Team Check", pos = UDim2.new(0.05, 0, 0.45, 0)},
-        {name = "Server Region", pos = UDim2.new(0.55, 0, 0.45, 0)}
+local progressBar = Instance.new("Frame")
+progressBar.Size = UDim2.new(0, 0, 1, 0)
+progressBar.BackgroundColor3 = CONFIG.Theme.Primary
+progressBar.BorderSizePixel = 0
+progressBar.Parent = progressBg
+
+local progressCorner2 = Instance.new("UICorner")
+progressCorner2.CornerRadius = UDim.new(1, 0)
+progressCorner2.Parent = progressBar
+
+local progressText = Instance.new("TextLabel")
+progressText.Size = UDim2.new(0, 100, 0, 20)
+progressText.Position = UDim2.new(0.5, -50, 0.72, 0)
+progressText.BackgroundTransparency = 1
+progressText.Text = "0%"
+progressText.TextColor3 = CONFIG.Theme.TextDim
+progressText.TextScaled = true
+progressText.Font = Enum.Font.Gotham
+progressText.Parent = loadingScreen
+
+local function animateLoading()
+    local progress = 0
+    local loadingTexts = {
+        "Establishing Connection...",
+        "Loading Modules...",
+        "Initializing UI...",
+        "Configuring Environment...",
+        "Applying Security Protocols...",
+        "Finalizing Setup..."
     }
     
-    for _, feature in pairs(features) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.35, 0, 0.25, 0)
-        btn.Position = feature.pos
-        btn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-        btn.BorderColor3 = Color3.fromRGB(100, 50, 200)
-        btn.BorderSizePixel = 2
-        btn.Text = feature.name
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextScaled = true
-        btn.Parent = mainUI
+    for i = 1, 100 do
+        progress = i
+        progressBar.Size = UDim2.new(progress / 100, 0, 1, 0)
+        progressText.Text = progress .. "%"
         
-        local gradient2 = Instance.new("UIGradient")
-        gradient2.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 20, 100)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 50, 100))
-        })
-        gradient2.Parent = btn
+        local textIndex = math.floor((progress / 100) * #loadingTexts)
+        if textIndex > 0 and textIndex <= #loadingTexts then
+            loadingSubtitle.Text = loadingTexts[textIndex]
+        end
+        
+        logoRing.BackgroundTransparency = 0.8 - (progress / 100) * 0.5
+        logoRing.Size = UDim2.new(1 + (progress / 100) * 0.3, 0, 1 + (progress / 100) * 0.3, 0)
+        logoRing.Rotation = progress * 3.6
+        
+        wait(0.02)
     end
     
-    -- Hitbox Size Slider
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0.35, 0, 0.25, 0)
-    sliderFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
-    sliderFrame.BackgroundTransparency = 1
-    sliderFrame.Visible = false
-    sliderFrame.Parent = mainUI
+    loadingTitle.Text = "SYSTEM READY"
+    loadingSubtitle.Text = "Authentication Required"
+    progressText.Text = "100%"
     
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(0.8, 0, 0.1, 0)
-    slider.Position = UDim2.new(0.1, 0, 0.8, 0)
-    slider.BackgroundColor3 = Color3.fromRGB(100, 50, 200)
-    slider.Parent = sliderFrame
+    wait(0.5)
     
-    local sliderButton = Instance.new("TextButton")
-    sliderButton.Size = UDim2.new(0.1, 0, 2, 0)
-    sliderButton.Position = UDim2.new(0.5, -15, -0.5, 0)
-    sliderButton.BackgroundColor3 = Color3.fromRGB(200, 100, 255)
-    sliderButton.BorderSizePixel = 0
-    sliderButton.Text = ""
-    sliderButton.Parent = slider
+    tweenService:Create(loadingScreen, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    wait(0.8)
+    loadingScreen.Visible = false
 end
 
-createMainUI()
+-- ============================================
+-- MAIN UI FRAME
+-- ============================================
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 900, 0, 650)
+mainFrame.Position = UDim2.new(0.5, -450, 0.5, -325)
+mainFrame.BackgroundColor3 = CONFIG.Theme.Background
+mainFrame.BackgroundTransparency = 0.05
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
 
--- Key Button Function
-keyButton.MouseButton1Click:Connect(function()
-    if keyBox.Text == key then
-        statusLabel.Text = "✅ ACCESS GRANTED"
-        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-        wait(0.5)
-        background.Visible = false
-        mainUI.Visible = true
-    else
-        statusLabel.Text = "❌ INVALID KEY"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        keyBox.Text = ""
-    end
-end)
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
 
--- Enter key support
-keyBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        keyButton.MouseButton1Click:Fire()
-    end
-end)
+local shadowFrame = Instance.new("Frame")
+shadowFrame.Size = UDim2.new(1.04, 0, 1.04, 0)
+shadowFrame.Position = UDim2.new(-0.02, 0, -0.02, 0)
+shadowFrame.BackgroundColor3 = CONFIG.Theme.Primary
+shadowFrame.BackgroundTransparency = 0.95
+shadowFrame.BorderSizePixel = 0
+shadowFrame.Parent = mainFrame
 
--- Original Script (Modified to be toggled)
-local enabled = false
+local shadowCorner = Instance.new("UICorner")
+shadowCorner.CornerRadius = UDim.new(0, 16)
+shadowCorner.Parent = shadowFrame
 
--- Your original function
-local function getplrsname()
-    for i,v in pairs(game:GetChildren()) do
-        if v.ClassName == "Players" then
-            return v.Name
-        end
-    end
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Size = 20
+blurEffect.Parent = shadowFrame
+
+local mainGradient = Instance.new("UIGradient")
+mainGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 8, 20)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 5, 35)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 20))
+})
+mainGradient.Parent = mainFrame
+
+local accentLine = Instance.new("Frame")
+accentLine.Size = UDim2.new(1, 0, 0, 2)
+accentLine.Position = UDim2.new(0, 0, 0, 0)
+accentLine.BackgroundColor3 = CONFIG.Theme.Primary
+accentLine.BorderSizePixel = 0
+accentLine.Parent = mainFrame
+
+-- ============================================
+-- AUTHENTICATION PANEL
+-- ============================================
+local authPanel = Instance.new("Frame")
+authPanel.Size = UDim2.new(1, 0, 1, 0)
+authPanel.BackgroundTransparency = 1
+authPanel.Parent = mainFrame
+
+local authTitle = Instance.new("TextLabel")
+authTitle.Size = UDim2.new(1, 0, 0, 60)
+authTitle.Position = UDim2.new(0, 0, 0, 40)
+authTitle.BackgroundTransparency = 1
+authTitle.Text = "QUANTUM SYSTEM"
+authTitle.TextColor3 = CONFIG.Theme.Text
+authTitle.TextScaled = true
+authTitle.Font = Enum.Font.GothamBold
+authTitle.Parent = authPanel
+
+local authSubtitle = Instance.new("TextLabel")
+authSubtitle.Size = UDim2.new(1, 0, 0, 30)
+authSubtitle.Position = UDim2.new(0, 0, 0, 100)
+authSubtitle.BackgroundTransparency = 1
+authSubtitle.Text = "ENTER VALIDATION KEY"
+authSubtitle.TextColor3 = CONFIG.Theme.TextDim
+authSubtitle.TextScaled = true
+authSubtitle.Font = Enum.Font.Gotham
+authSubtitle.Parent = authPanel
+
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(0.4, 0, 0, 50)
+keyInput.Position = UDim2.new(0.3, 0, 0, 160)
+keyInput.BackgroundColor3 = CONFIG.Theme.Surface
+keyInput.BorderSizePixel = 0
+keyInput.TextColor3 = CONFIG.Theme.Text
+keyInput.Text = ""
+keyInput.PlaceholderText = "Enter Validation Key"
+keyInput.PlaceholderColor3 = CONFIG.Theme.TextDim
+keyInput.Font = Enum.Font.Gotham
+keyInput.TextScaled = true
+keyInput.ClearTextOnFocus = false
+keyInput.Parent = authPanel
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0, 8)
+keyCorner.Parent = keyInput
+
+local keyFocusGlow = Instance.new("Frame")
+keyFocusGlow.Size = UDim2.new(1, 0, 1, 0)
+keyFocusGlow.Position = UDim2.new(0, 0, 0, 0)
+keyFocusGlow.BackgroundColor3 = CONFIG.Theme.Primary
+keyFocusGlow.BackgroundTransparency = 0.8
+keyFocusGlow.BorderSizePixel = 0
+keyFocusGlow.Parent = keyInput
+
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(0, 8)
+glowCorner.Parent = keyFocusGlow
+
+local authButton = Instance.new("TextButton")
+authButton.Size = UDim2.new(0.25, 0, 0, 50)
+authButton.Position = UDim2.new(0.375, 0, 0, 230)
+authButton.BackgroundColor3 = CONFIG.Theme.Primary
+authButton.BorderSizePixel = 0
+authButton.Text = "AUTHENTICATE"
+authButton.TextColor3 = CONFIG.Theme.Text
+authButton.Font = Enum.Font.GothamBold
+authButton.TextScaled = true
+authButton.Parent = authPanel
+
+local authCorner = Instance.new("UICorner")
+authCorner.CornerRadius = UDim.new(0, 8)
+authCorner.Parent = authButton
+
+local authGradient = Instance.new("UIGradient")
+authGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, CONFIG.Theme.Primary),
+    ColorSequenceKeypoint.new(1, CONFIG.Theme.Secondary)
+})
+authGradient.Parent = authButton
+
+local authStatus = Instance.new("TextLabel")
+authStatus.Size = UDim2.new(1, 0, 0, 30)
+authStatus.Position = UDim2.new(0, 0, 0, 300)
+authStatus.BackgroundTransparency = 1
+authStatus.Text = ""
+authStatus.TextColor3 = CONFIG.Theme.Error
+authStatus.TextScaled = true
+authStatus.Font = Enum.Font.Gotham
+authStatus.Parent = authPanel
+
+-- ============================================
+-- TAB SYSTEM
+-- ============================================
+local tabContainer = Instance.new("Frame")
+tabContainer.Size = UDim2.new(1, 0, 0, 45)
+tabContainer.Position = UDim2.new(0, 0, 0, 0)
+tabContainer.BackgroundColor3 = CONFIG.Theme.Background
+tabContainer.BackgroundTransparency = 0.5
+tabContainer.BorderSizePixel = 0
+tabContainer.Visible = false
+tabContainer.Parent = mainFrame
+
+local tabGradient = Instance.new("UIGradient")
+tabGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 5, 15)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 5, 30))
+})
+tabGradient.Parent = tabContainer
+
+-- Tab Button Creation
+local tabs = {}
+local currentTab = nil
+
+local function createTab(tabName, icon)
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(0, 120, 1, 0)
+    tabBtn.Position = UDim2.new(#tabs * 0.133, 0, 0, 0)
+    tabBtn.BackgroundColor3 = CONFIG.Theme.Background
+    tabBtn.BackgroundTransparency = 1
+    tabBtn.BorderSizePixel = 0
+    tabBtn.Text = icon .. " " .. tabName
+    tabBtn.TextColor3 = CONFIG.Theme.TextDim
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.TextScaled = true
+    tabBtn.Parent = tabContainer
+    
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 0)
+    tabCorner.Parent = tabBtn
+    
+    -- Tab underline
+    local underline = Instance.new("Frame")
+    underline.Size = UDim2.new(0.8, 0, 0, 2)
+    underline.Position = UDim2.new(0.1, 0, 1, -2)
+    underline.BackgroundColor3 = CONFIG.Theme.Primary
+    underline.BackgroundTransparency = 1
+    underline.BorderSizePixel = 0
+    underline.Parent = tabBtn
+    
+    local tabData = {
+        Button = tabBtn,
+        Underline = underline,
+        Name = tabName
+    }
+    
+    table.insert(tabs, tabData)
+    return tabData
 end
 
-local function startScript()
-    local players = getplrsname()
-    local plr = game[players].LocalPlayer
-    
-    coroutine.resume(coroutine.create(function()
-        while wait(1) do
-            if not enabled then break end
-            coroutine.resume(coroutine.create(function()
-                for _,v in pairs(game[players]:GetPlayers()) do
-                    if v.Name ~= plr.Name and v.Character then
-                        pcall(function()
-                            v.Character.RightUpperLeg.CanCollide = false
-                            v.Character.RightUpperLeg.Transparency = 0.3
-                            v.Character.RightUpperLeg.Size = Vector3.new(13,13,13)
-                            
-                            v.Character.LeftUpperLeg.CanCollide = false
-                            v.Character.LeftUpperLeg.Transparency = 0.3
-                            v.Character.LeftUpperLeg.Size = Vector3.new(13,13,13)
-                            
-                            v.Character.HeadHB.CanCollide = false
-                            v.Character.HeadHB.Transparency = 0.3
-                            v.Character.HeadHB.Size = Vector3.new(13,13,13)
-                            
-                            v.Character.HumanoidRootPart.CanCollide = false
-                            v.Character.HumanoidRootPart.Transparency = 0.3
-                            v.Character.HumanoidRootPart.Size = Vector3.new(13,13,13)
-                        end)
-                    end
-                end
-            end))
-        end
-    end))
+-- Create Tabs
+local tabNames = {
+    {name = "MAIN", icon = "◆"},
+    {name = "ESP", icon = "◈"},
+    {name = "SETTINGS", icon = "⚙"},
+    {name = "CREDITS", icon = "■"}
+}
+
+for _, tabInfo in pairs(tabNames) do
+    createTab(tabInfo.name, tabInfo.icon)
 end
 
--- Toggle script with UI button (example)
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
-toggleBtn.Position = UDim2.new(0.35, 0, 0.85, 0)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-toggleBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
-toggleBtn.BorderSizePixel = 2
-toggleBtn.Text = "⏸ TOGGLE SCRIPT"
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextScaled = true
-toggleBtn.Parent = mainUI
+-- ============================================
+-- TAB CONTENT PANELS
+-- ============================================
+local contentContainer = Instance.new("Frame")
+contentContainer.Size = UDim2.new(1, 0, 1, -45)
+contentContainer.Position = UDim2.new(0, 0, 0, 45)
+contentContainer.BackgroundTransparency = 1
+contentContainer.Visible = false
+contentContainer.Parent = mainFrame
 
-toggleBtn.MouseButton1Click:Connect(function()
-    enabled = not enabled
-    if enabled then
-        toggleBtn.Text = "▶ SCRIPT ACTIVE"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        startScript()
-    else
-        toggleBtn.Text = "⏸ TOGGLE SCRIPT"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-    end
-end)
+-- MAIN TAB
+local mainTab = Instance.new("Frame")
+mainTab.Size = UDim2.new(1, 0, 1, 0)
+mainTab.BackgroundTransparency = 1
+mainTab.Visible = true
+mainTab.Parent = contentContainer
 
--- Server Region Check
-local regionBtn = Instance.new("TextButton")
-regionBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
-regionBtn.Position = UDim2.new(0.35, 0, 0.75, 0)
-regionBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-regionBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
-regionBtn.BorderSizePixel = 2
-regionBtn.Text = "🌍 CHECK REGION"
-regionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-regionBtn.Font = Enum.Font.GothamBold
-regionBtn.TextScaled = true
-regionBtn.Parent = mainUI
+-- Main Tab Content
+local mainGrid = Instance.new("Frame")
+mainGrid.Size = UDim2.new(0.92, 0, 0.85, 0)
+mainGrid.Position = UDim2.new(0.04, 0, 0.05, 0)
+mainGrid.BackgroundColor3 = CONFIG.Theme.Surface
+mainGrid.BackgroundTransparency = 0.3
+mainGrid.BorderSizePixel = 0
+mainGrid.Parent = mainTab
 
-regionBtn.MouseButton1Click:Connect(function()
-    local region = game:GetService("NetworkServer"):GetServerRegion()
-    regionBtn.Text = "🌍 " .. region:upper()
-    wait(2)
-    regionBtn.Text = "🌍 CHECK REGION"
-end)
+local mainGridCorner = Instance.new("UICorner")
+mainGridCorner.CornerRadius = UDim.new(0, 10)
+mainGridCorner.Parent = mainGrid
 
--- ESP Toggle
-local espEnabled = false
-local espBtn = Instance.new("TextButton")
-espBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
-espBtn.Position = UDim2.new(0.35, 0, 0.65, 0)
-espBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-espBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
-espBtn.BorderSizePixel = 2
-espBtn.Text = "👁 ESP OFF"
-espBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-espBtn.Font = Enum.Font.GothamBold
-espBtn.TextScaled = true
-espBtn.Parent = mainUI
+-- Main Features
+local mainFeatures = {
+    {title = "HITBOX OPTIMIZATION", desc = "Modify enemy hitbox properties", color = CONFIG.Theme.Primary},
+    {title = "PLAYER VISUALIZATION", desc = "Display player information", color = CONFIG.Theme.Secondary},
+    {title = "TEAM MANAGEMENT", desc = "View and manage team data", color = CONFIG.Theme.Success},
+    {title = "SERVER ANALYSIS", desc = "Analyze server performance", color = CONFIG.Theme.Error}
+}
 
-espBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    espBtn.Text = espEnabled and "👁 ESP ON" or "👁 ESP OFF"
+local mainModules = {}
+for i, feature in ipairs(mainFeatures) do
+    local row = math.floor((i-1) / 2)
+    local col = (i-1) % 2
     
-    -- Simple ESP implementation
-    for _,v in pairs(game:GetService("Players"):GetPlayers()) do
-        if v ~= game.Players.LocalPlayer and v.Character then
-            if v.Character:FindFirstChild("Head") then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = v.Character
-                highlight.Enabled = espEnabled
-                highlight.FillColor = espEnabled and Color3.fromRGB(255, 0, 0) or Color3.new()
-                highlight.OutlineColor = espEnabled and Color3.fromRGB(255, 255, 255) or Color3.new()
-            end
-        end
-    end
-end)
+    local moduleFrame = Instance.new("Frame")
+    moduleFrame.Size = UDim2.new(0.45, 0, 0.40, 0)
+    moduleFrame.Position = UDim2.new(0.02 + col * 0.51, 0, 0.05 + row * 0.45, 0)
+    moduleFrame.BackgroundColor3 = CONFIG.Theme.Card
+    moduleFrame.BackgroundTransparency = 0.2
+    moduleFrame.BorderSizePixel = 0
+    moduleFrame.Parent = mainGrid
+    
+    local moduleCorner = Instance.new("UICorner")
+    moduleCorner.CornerRadius = UDim.new(0, 8)
+    moduleCorner.Parent = moduleFrame
+    
+    local moduleTitle = Instance.new("TextLabel")
+    moduleTitle.Size = UDim2.new(1, 0, 0, 30)
+    moduleTitle.Position = UDim2.new(0, 0, 0, 10)
+    moduleTitle.BackgroundTransparency = 1
+    moduleTitle.Text = feature.title
+    moduleTitle.TextColor3 = CONFIG.Theme.Text
+    moduleTitle.TextScaled = true
+    moduleTitle.Font = Enum.Font.GothamBold
+    moduleTitle.Parent = moduleFrame
+    
+    local moduleDesc = Instance.new("TextLabel")
+    moduleDesc.Size = UDim2.new(1, 0, 0, 20)
+    moduleDesc.Position = UDim2.new(0, 0, 0, 40)
+    moduleDesc.BackgroundTransparency = 1
+    moduleDesc.Text = feature.desc
+    moduleDesc.TextColor3 = CONFIG.Theme.TextDim
+    moduleDesc.TextScaled = true
+    moduleDesc.Font = Enum.Font.Gotham
+    moduleDesc.Parent = moduleFrame
+    
+    local moduleBtn = Instance.new("TextButton")
+    moduleBtn.Size = UDim2.new(0.8, 0, 0.25, 0)
+    moduleBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+    moduleBtn.BackgroundColor3 = feature.color
+    moduleBtn.BorderSizePixel = 0
+    moduleBtn.Text = "ACTIVATE"
+    moduleBtn.TextColor3 = CONFIG.Theme.Text
+    moduleBtn.Font = Enum.Font.GothamBold
+    moduleBtn.TextScaled = true
+    moduleBtn.Parent = moduleFrame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = moduleBtn
+    
+    local moduleStatus = Instance.new("TextLabel")
+    moduleStatus.Size = UDim2.new(1, 0, 0, 20)
+    moduleStatus.Position = UDim2.new(0, 0, 0.55, 0)
+    moduleStatus.BackgroundTransparency = 1
+    moduleStatus.Text = "INACTIVE"
+    moduleStatus.TextColor3 = CONFIG.Theme.TextDim
+    moduleStatus.TextScaled = true
+    moduleStatus.Font = Enum.Font.Gotham
+    moduleStatus.Parent = moduleFrame
+    
+    mainModules[feature.title] = {
+        Frame = moduleFrame,
+        Button = moduleBtn,
+        Status = moduleStatus,
+        Active = false
+    }
+end
 
--- Team Check
-local teamCheckBtn = Instance.new("TextButton")
-teamCheckBtn.Size = UDim2.new(0.3, 0, 0.08, 0)
-teamCheckBtn.Position = UDim2.new(0.35, 0, 0.55, 0)
-teamCheckBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
-teamCheckBtn.BorderColor3 = Color3.fromRGB(100, 50, 200)
-teamCheckBtn.BorderSizePixel = 2
-teamCheckBtn.Text = "👥 TEAM CHECK"
-teamCheckBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-teamCheckBtn.Font = Enum.Font.GothamBold
-teamCheckBtn.TextScaled = true
-teamCheckBtn.Parent = mainUI
+-- ESP TAB
+local espTab = Instance.new("Frame")
+espTab.Size = UDim2.new(1, 0, 1, 0)
+espTab.BackgroundTransparency = 1
+espTab.Visible = false
+espTab.Parent = contentContainer
 
-teamCheckBtn.MouseButton1Click:Connect(function()
-    local plr = game.Players.LocalPlayer
-    local team = plr.Team
-    local msg = team and "Team: " .. team.Name or "No Team"
-    teamCheckBtn.Text = msg
-    wait(2)
-    teamCheckBtn.Text = "👥 TEAM CHECK"
-end)
+local espGrid = Instance.new("Frame")
+espGrid.Size = UDim2.new(0.92, 0, 0.85, 0)
+espGrid.Position = UDim2.new(0.04, 0, 0.05, 0)
+espGrid.BackgroundColor3 = CONFIG.Theme.Surface
+espGrid.BackgroundTransparency = 0.3
+espGrid.BorderSizePixel = 0
+espGrid.Parent = espTab
+
+local espGridCorner = Instance.new("UICorner")
+espGridCorner.CornerRadius = UDim.new(0, 10)
+espGridCorner.Parent = espGrid
+
+-- ESP Options
+local espOptions = {
+    {title = "PLAYER ESP", desc = "Highlight all players", color = CONFIG.Theme.Primary},
+    {title = "BOX ESP", desc = "Draw boxes around players", color = CONFIG.Theme.Secondary},
+    {title = "NAME ESP", desc = "Display player names", color = CONFIG.Theme.Success},
+    {title = "DISTANCE ESP", desc = "Show distance to players", color = CONFIG.Theme.Warning}
+}
+
+local espModules = {}
+for i, option in ipairs(espOptions) do
+    local row = math.floor((i-1) / 2)
+    local col = (i-1) % 2
+    
+    local moduleFrame = Instance.new("Frame")
+    moduleFrame.Size = UDim2.new(0.45, 0, 0.40, 0)
+    moduleFrame.Position = UDim2.new(0.02 + col * 0.51, 0, 0.05 + row * 0.45, 0)
+    moduleFrame.BackgroundColor3 = CONFIG.Theme.Card
+    moduleFrame.BackgroundTransparency = 0.2
+    moduleFrame.BorderSizePixel = 0
+    moduleFrame.Parent = espGrid
+    
+    local moduleCorner = Instance.new("UICorner")
+    moduleCorner.CornerRadius = UDim.new(0, 8)
+    moduleCorner.Parent = moduleFrame
+    
+    local moduleTitle = Instance.new("TextLabel")
+    moduleTitle.Size = UDim2.new(1, 0, 0, 30)
+    moduleTitle.Position = UDim2.new(0, 0, 0, 10)
+    moduleTitle.BackgroundTransparency = 1
+    moduleTitle.Text = option.title
+    moduleTitle.TextColor3 = CONFIG.Theme.Text
+    moduleTitle.TextScaled = true
+    moduleTitle.Font = Enum.Font.GothamBold
+    moduleTitle.Parent = moduleFrame
+    
+    local moduleDesc = Instance.new("TextLabel")
+    moduleDesc.Size = UDim2.new(1, 0, 0, 20)
+    moduleDesc.Position = UDim2.new(0, 0, 0, 40)
+    moduleDesc.BackgroundTransparency = 1
+    moduleDesc.Text = option.desc
+    moduleDesc.TextColor3 = CONFIG.Theme.TextDim
+    moduleDesc.TextScaled = true
+    moduleDesc.Font = Enum.Font.Gotham
+    moduleDesc.Parent = moduleFrame
+    
+    local moduleBtn = Instance.new("TextButton")
+    moduleBtn.Size = UDim2.new(0.8, 0, 0.25, 0)
+    moduleBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+    moduleBtn.BackgroundColor3 = option.color
+    moduleBtn.BorderSizePixel = 0
+    moduleBtn.Text = "ACTIVATE"
+    moduleBtn.TextColor3 = CONFIG.Theme.Text
+    moduleBtn.Font = Enum.Font.GothamBold
+    moduleBtn.TextScaled = true
+    moduleBtn.Parent = moduleFrame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = moduleBtn
+    
+    local moduleStatus = Instance.new("TextLabel")
+    moduleStatus.Size = UDim2.new(1, 0, 0, 20)
+    moduleStatus.Position = UDim2.new(0, 0, 0.55, 0)
+    moduleStatus.BackgroundTransparency = 1
+    moduleStatus.Text = "INACTIVE"
+    moduleStatus.TextColor3 = CONFIG.Theme.TextDim
+    moduleStatus.TextScaled = true
+    moduleStatus.Font = Enum.Font.Gotham
+    moduleStatus.Parent = moduleFrame
+    
+    espModules[option.title] = {
+        Frame = moduleFrame,
+        Button = moduleBtn,
+        Status = moduleStatus,
+        Active = false
+    }
+end
+
+-- SETTINGS TAB
+local settingsTab = Instance.new("Frame")
+settingsTab.Size = UDim2.new(1, 0, 1, 0)
+settingsTab.BackgroundTransparency = 1
+settingsTab.Visible = false
+settingsTab.Parent = contentContainer
+
+local settingsGrid = Instance.new("Frame")
+settingsGrid.Size = UDim2.new(0.92, 0, 0.85, 0)
+settingsGrid.Position = UDim2.new(0.04, 0, 0.05, 0)
+settingsGrid.BackgroundColor3 = CONFIG.Theme.Surface
+settingsGrid.BackgroundTransparency = 0.3
+settingsGrid.BorderSizePixel = 0
+settingsGrid.Parent = settingsTab
+
+local settingsGridCorner = Instance.new("UICorner")
+settingsGridCorner.CornerRadius = UDim.new(0, 10)
+settingsGridCorner.Parent = settingsGrid
+
+-- Settings Options
+local settingsOptions = {
+    {title = "UI THEME", desc = "Change interface appearance", type = "dropdown"},
+    {title = "AUTO-ENABLE", desc = "Enable features on startup", type = "toggle"},
+    {title = "NOTIFICATIONS", desc = "Show system notifications", type = "toggle"},
+    {title = "PERFORMANCE", desc = "Optimize for performance", type = "slider"}
+}
+
+for i, option in ipairs(settingsOptions) do
+    local row = math.floor((i-1) / 2)
+    local col = (i-1) % 2
+    
+    local moduleFrame = Instance.new("Frame")
+    moduleFrame.Size = UDim2.new(0.45, 0, 0.40, 0)
+    moduleFrame.Position = UDim2.new(0.02 + col * 0.51, 0, 0.05 + row * 0.45, 0)
+    moduleFrame.BackgroundColor3 = CONFIG.Theme.Card
+    moduleFrame.BackgroundTransparency = 0.2
+    moduleFrame.BorderSizePixel = 0
+    moduleFrame.Parent = settingsGrid
+    
+    local moduleCorner = Instance.new("UICorner")
+    moduleCorner.CornerRadius = UDim.new(0, 8)
+    moduleCorner.Parent = moduleFrame
+    
+    local moduleTitle = Instance.new("TextLabel")
+    moduleTitle.Size = UDim2.new(1, 0, 0, 30)
+    moduleTitle.Position = UDim2.new(0, 0, 0, 10)
+    moduleTitle.BackgroundTransparency = 1
+    moduleTitle.Text = option.title
+    moduleTitle.TextColor3 = CONFIG.Theme.Text
+    moduleTitle.TextScaled = true
+    moduleTitle.Font = Enum.Font.GothamBold
+    moduleTitle.Parent = moduleFrame
+    
+    local moduleDesc = Instance.new("TextLabel")
+    moduleDesc.Size = UDim2.new(1, 0, 0, 20)
+    moduleDesc.Position = UDim2.new(0, 0, 0, 40)
+    moduleDesc.BackgroundTransparency = 1
+    moduleDesc.Text = option.desc
+    moduleDesc.TextColor3 = CONFIG.Theme.TextDim
+    moduleDesc.TextScaled = true
+    moduleDesc.Font = Enum.Font.Gotham
+    moduleDesc.Parent = moduleFrame
+    
+    local settingControl = Instance.new("TextButton")
+    settingControl.Size = UDim2.new(0.8, 0, 0.25, 0)
+    settingControl.Position = UDim2.new(0.1, 0, 0.65, 0)
+    settingControl.BackgroundColor3 = CONFIG.Theme.Primary
+    settingControl.BorderSizePixel = 0
+    settingControl.Text = option.type:upper()
+    settingControl.TextColor3 = CONFIG.Theme.Text
+    settingControl.Font = Enum.Font.GothamBold
+    settingControl.TextScaled = true
+    settingControl.Parent = moduleFrame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = settingControl
+end
+
+-- CREDITS TAB
+local creditsTab = Instance.new("Frame")
+creditsTab.Size = UDim2.new(1, 0, 1, 0)
+creditsTab.BackgroundTransparency = 1
+creditsTab.Visible = false
+creditsTab.Parent = contentContainer
+
+local creditsGrid = Instance.new("Frame")
+creditsGrid.Size = UDim2.new(0.92, 0, 0.85, 0)
+creditsGrid.Position = UDim2.new(0.04, 0, 0.05, 0)
+creditsGrid.BackgroundColor3 = CONFIG.Theme.Surface
+creditsGrid.BackgroundTransparency = 0.3
+creditsGrid.BorderSizePixel = 0
+creditsGrid.Parent = creditsTab
+
+local creditsGridCorner = Instance.new("UICorner")
+creditsGridCorner.CornerRadius = UDim.new(0, 10)
+creditsGridCorner.Parent = creditsGrid
+
+-- Credit Cards
+local credits = {
+    {title = "SCRIPT DEVELOPER", name = "Purqz", desc = "Lead Developer & Architect", color = CONFIG.Theme.Primary},
+    {title = "UI DESIGNER", name = "Purqz", desc = "Interface Design & Experience", color = CONFIG.Theme.Secondary},
+    {title = "SYSTEM ENGINEER", name = "Purqz", desc = "Core Systems & Optimization", color = CONFIG.Theme.Success},
+    {title = "TESTING & QA", name = "Purqz", desc = "Quality Assurance & Testing", color = CONFIG.Theme.Warning}
+}
+
+for i, credit in ipairs(credits) do
+    local row = math.floor((i-1) / 2)
+    local col = (i-1) % 2
+    
+    local creditCard = Instance.new("Frame")
+    creditCard.Size = UDim2.new(0.45, 0, 0.40, 0)
+    creditCard.Position = UDim2.new(0.02 + col * 0.51, 0, 0.05 + row * 0.45, 0)
+    creditCard.BackgroundColor3 = CONFIG.Theme.Card
+    creditCard.BackgroundTransparency = 0.2
+    creditCard.BorderSizePixel = 0
+    creditCard.Parent = creditsGrid
+    
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 8)
+    cardCorner.Parent = creditCard
+    
+    -- Credit icon/avatar placeholder
+    local avatarFrame = Instance.new("Frame")
+    avatarFrame.Size = UDim2.new(0, 60, 0, 60)
+    avatarFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
+    avatarFrame.BackgroundColor3 = credit.color
+    avatarFrame.BackgroundTransparency = 0.3
+    avatarFrame.BorderSizePixel = 0
+    avatarFrame.Parent = creditCard
+    
+    local avatarCorner = Instance.new("UICorner")
+    avatarCorner.CornerRadius = UDim.new(1, 0)
+    avatarCorner.Parent = avatarFrame
+    
+    local avatarText = Instance.new("TextLabel")
+    avatarText.Size = UDim2.new(1, 0, 1, 0)
+    avatarText.Position = UDim2.new(0, 0, 0, 0)
+    avatarText.BackgroundTransparency = 1
+    avatarText.Text = string.sub(credit.name, 1, 1)
+    avatarText.TextColor3 = CONFIG.Theme.Text
+    avatarText.TextScaled = true
+    avatarText.Font = Enum.Font.GothamBold
+    avatarText.Parent = avatarFrame
+    
+    local creditTitle = Instance.new("TextLabel")
+    creditTitle.Size = UDim2.new(0.65, 0, 0, 25)
+    creditTitle.Position = UDim2.new(0.3, 0, 0.2, 0)
+    creditTitle.BackgroundTransparency = 1
+    creditTitle.Text = credit.title
+    creditTitle.TextColor3 = CONFIG.Theme.TextDim
+    creditTitle.TextScaled = true
+    creditTitle.Font = Enum.Font.Gotham
+    creditTitle.TextXAlignment = Enum.TextXAlignment.Left
+    creditTitle.Parent = creditCard
+    
+    local creditName = Instance.new("TextLabel")
+    creditName.Size = UDim2.new(0.65, 0, 0, 35)
