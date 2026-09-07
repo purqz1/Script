@@ -17,8 +17,8 @@ local BaseSpeed = 16
 local lastVisibleTarget = nil
 local lastTriggerClick = 0
 local superJumpActive = false
-local guiVisible = true
 local wallbangActive = false
+local guiVisible = true  -- tracks on-screen text display visibility
 
 local function elasticOut(t)
     local p = 0.3
@@ -61,10 +61,9 @@ local function isSelfKnocked()
 end
 
 local function canSeeTarget(part)
-    if wallbangActive and Config['Wallbang']['Enabled'] then
-        return true
-    end
-    
+if wallbangActive and Config['Wallbang']['Enabled'] then
+    return true
+end
     if not Config['Settings']['Visible Check'] then return true end
     
     if not part or not part.Parent then return false end
@@ -382,74 +381,6 @@ local function TriggerBot()
     lastTriggerClick = tick()
 end
 
-local function applyDamageEnhancer()
-    if not Config['Damage Enhancer']['Enabled'] then return end
-    
-    local character = LocalPlayer.Character
-    if not character then return end
-    
-    local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then return end
-    
-    local weaponConfig = Config['Damage Enhancer']['Specific Weapons']
-    if weaponConfig['Enabled'] then
-        local valid = false
-        for _, wName in pairs(weaponConfig['Weapons']) do
-            if tool.Name == wName then
-                valid = true
-                break
-            end
-        end
-        if not valid then return end
-    end
-    
-    local multiplier = 1
-    local mode = Config['Damage Enhancer']['Mode']
-    if mode == 'Light' then
-        multiplier = 1.5
-    elseif mode == 'Medium' then
-        multiplier = 2.0
-    elseif mode == 'Full' then
-        multiplier = 3.0
-    end
-    
-    local damageProps = {"Damage", "BaseDamage", "MaxDamage", "MinDamage", "BulletDamage", "DamageAmount", "HitDamage"}
-    for _, propName in pairs(damageProps) do
-        local prop = tool:FindFirstChild(propName)
-        if prop and prop:IsA("NumberValue") then
-            if not tool:FindFirstChild("_Original" .. propName) then
-                local orig = Instance.new("NumberValue")
-                orig.Name = "_Original" .. propName
-                orig.Value = prop.Value
-                orig.Parent = tool
-            end
-            local origValue = tool:FindFirstChild("_Original" .. propName)
-            if origValue then
-                prop.Value = origValue.Value * multiplier
-            end
-        end
-    end
-    
-    local configFolder = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig") or tool:FindFirstChild("Stats")
-    if configFolder then
-        for _, propName in pairs(damageProps) do
-            local prop = configFolder:FindFirstChild(propName)
-            if prop and prop:IsA("NumberValue") then
-                if not configFolder:FindFirstChild("_Original" .. propName) then
-                    local orig = Instance.new("NumberValue")
-                    orig.Name = "_Original" .. propName
-                    orig.Value = prop.Value
-                    orig.Parent = configFolder
-                end
-                local origValue = configFolder:FindFirstChild("_Original" .. propName)
-                if origValue then
-                    prop.Value = origValue.Value * multiplier
-                end
-            end
-        end
-    end
-end
-
 local grm = getrawmetatable(game)
 local oldIndex = grm.__index
 setreadonly(grm, false)
@@ -480,6 +411,41 @@ grm.__index = function(self, key)
     end
     return oldIndex(self, key)
 end
+
+local oldRandom
+oldRandom = hookfunction(math.random, function(...)
+    local args = {...}
+    if checkcaller() then
+        return oldRandom(...)
+    end
+    
+    if (#args == 0) or (args[1] == -0.05 and args[2] == 0.05) or (args[1] == -0.1) or (args[1] == -0.05) then
+        if Config['Spread']['Enabled'] then
+            if Config['Spread']['Specific Weapons']['Enabled'] then
+                local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                if tool then
+                    local weaponName = tool.Name
+                    local foundWeapon = false
+                    
+                    for _, weapon in pairs(Config['Spread']['Specific Weapons']['Weapons']) do
+                        if weaponName == weapon then
+                            foundWeapon = true
+                            break
+                        end
+                    end
+                    
+                    if foundWeapon then
+                        return oldRandom(...) * (Config['Spread']['Amount'] / 100)
+                    end
+                end
+            else
+                return oldRandom(...) * (Config['Spread']['Amount'] / 100)
+            end
+        end
+    end
+    
+    return oldRandom(...)
+end)
 
 local function addESPToPlayer(player)
     if player == LocalPlayer then return end
@@ -569,7 +535,7 @@ for _, player in pairs(Players:GetPlayers()) do
     player.CharacterAdded:Connect(function(char)
         removeESPFromPlayer(player)
         char:WaitForChild("HumanoidRootPart")
-        wait(0.1)
+        task.wait(0.1)
         addESPToPlayer(player)
     end)
     
@@ -583,7 +549,7 @@ Players.PlayerAdded:Connect(function(player)
         player.CharacterAdded:Connect(function(char)
             removeESPFromPlayer(player)
             char:WaitForChild("HumanoidRootPart")
-            wait(0.1)
+            task.wait(0.1)
             addESPToPlayer(player)
         end)
         
@@ -616,7 +582,7 @@ RunService.Heartbeat:Connect(function()
             Config['Super Jump']['Power'],
             rootPart.Velocity.Z
         )
-        wait(Config['Super Jump']['Cooldown'])
+        task.wait(Config['Super Jump']['Cooldown'])
     end
 end)
 
@@ -628,10 +594,6 @@ RunService.RenderStepped:Connect(function()
     end
     
     TriggerBot()
-    
-    if Config['Damage Enhancer']['Enabled'] then
-        applyDamageEnhancer()
-    end
     
     if SpeedEnabled and Config['Speed']['Enabled'] then
         local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -738,6 +700,10 @@ RunService.RenderStepped:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
+if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Wallbang']] then
+    wallbangActive = not wallbangActive
+    print("Wallbang: " .. (wallbangActive and "ON" or "OFF"))
+end
     if processed then return end
     
     if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Target Lock']['Key']] then
@@ -807,14 +773,9 @@ UserInputService.InputBegan:Connect(function(input, processed)
         print("Super Jump: " .. (superJumpActive and "ON" or "OFF"))
     end
     
-    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Toggle on-screen Text']] then
+    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Toggle GUI']] then
         guiVisible = not guiVisible
         print("GUI Text: " .. (guiVisible and "ON" or "OFF"))
-    end
-    
-    if input.KeyCode == Enum.KeyCode[Config['Keybinds']['Wallbang']] then
-        wallbangActive = not wallbangActive
-        print("Wallbang: " .. (wallbangActive and "ON" or "OFF"))
     end
 end)
 
@@ -841,9 +802,8 @@ UserInputService.InputEnded:Connect(function(input, processed)
 end)
 
 LocalPlayer.CharacterAdded:Connect(function()
-    wait(1)
+    task.wait(1)
 end)
-
 local rapidFireActive = false
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -881,9 +841,8 @@ RunService.Heartbeat:Connect(function()
     end
     
     tool:Activate()
-    wait(Config['Rapid Fire']['Delay'])
+    task.wait(Config['Rapid Fire']['Delay'])
 end)
-
 local infRangeActive = false
 
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -902,4 +861,121 @@ RunService.RenderStepped:Connect(function()
     if not character then return end
     
     local tool = character:FindFirstChildOfClass("Tool")
-    if not tool then return
+    if not tool then return end
+    
+    local rangeProps = {"Range", "MaxRange", "FireRange", "Distance", "MaxDistance"}
+    
+    for _, propName in pairs(rangeProps) do
+        local rangeValue = tool:FindFirstChild(propName)
+        if rangeValue and rangeValue:IsA("NumberValue") then
+            rangeValue.Value = Config['Infinite Range']['Max Range']
+        end
+        
+        local config = tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunConfig")
+        if config then
+            local r = config:FindFirstChild(propName)
+            if r and r:IsA("NumberValue") then
+                r.Value = Config['Infinite Range']['Max Range']
+            end
+        end
+    end
+end)
+
+
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.CoreGui
+
+local text = Instance.new("TextLabel")
+text.Parent = gui
+
+text.AnchorPoint = Vector2.new(0.5, 1)
+text.Position = UDim2.new(0.5, 0, 1, -110)
+text.Size = UDim2.new(0, 260, 0, 140)
+
+text.BackgroundTransparency = 1
+text.TextXAlignment = Enum.TextXAlignment.Center
+text.TextYAlignment = Enum.TextYAlignment.Bottom
+
+text.Font = Enum.Font.Gotham
+text.TextSize = 15
+text.RichText = true
+
+text.TextStrokeTransparency = 0
+text.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+
+RunService.RenderStepped:Connect(function()
+    if not guiVisible then
+        text.Text = ""
+        return
+    end
+    
+    local lines = {}
+
+    table.insert(lines, '<font color="rgb(255,255,255)">ecco.club</font>')
+
+    if Config["Silent Aim"]["Enabled"] and currentTarget then
+        local character = currentTarget.Parent
+        local player = Players:GetPlayerFromCharacter(character)
+
+        if player and character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+            if humanoid then
+                local health = math.floor(humanoid.Health)
+
+
+local shield = 0
+
+local bodyEffects = character:FindFirstChild("BodyEffects")
+if bodyEffects then
+    local armor = bodyEffects:FindFirstChild("Armor")
+    if armor and armor.Value then
+        shield = math.floor(armor.Value)
+    end
+end
+
+local healthColor = "rgb(50,205,50)"
+local shieldColor = "rgb(135,206,250)"
+
+table.insert(lines,
+    '<font color="rgb(255,255,255)">Health </font>' ..
+    '<font color="'..healthColor..'">'..health..'</font>' ..
+    '<font color="rgb(255,255,255)"> / </font>' ..
+    '<font color="'..shieldColor..'">'..shield..'</font>'
+)
+                local name = (player.DisplayName ~= "" and player.DisplayName) or player.Name
+
+                table.insert(lines,
+                    '<font color="rgb(255,255,255)">Silent Aim </font><font color="rgb(50,205,50)">('..name..')</font>'
+                )
+            end
+        end
+    end
+
+    if triggerEnabled and Config['Trigger Bot']['Enabled'] then
+        if currentTarget then
+            local character = currentTarget.Parent
+            local player = Players:GetPlayerFromCharacter(character)
+            if player then
+                local targetName = (player.DisplayName and player.DisplayName ~= "") and player.DisplayName or player.Name
+                table.insert(lines,
+                    '<font color="rgb(255,255,255)">Trigger Bot </font><font color="rgb(50,205,50)">(' .. targetName .. ')</font>'
+                )
+            end
+        end
+    end
+
+    if infRangeActive then
+        table.insert(lines,
+            '<font color="rgb(255,255,255)">Infinite Range</font>'
+        )
+    end
+
+    if SpeedEnabled then
+        table.insert(lines,
+            '<font color="rgb(255,255,255)">WalkSpeed</font>'
+        )
+    end
+
+    text.Text = table.concat(lines, "\n")
+end)
